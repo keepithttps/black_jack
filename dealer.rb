@@ -1,77 +1,90 @@
-class Dealer
-  attr_accessor :sum_cards_player, :sum_cards_dealer
- 
-  def  initialize
-    @deck_cards_number = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'] 
-    @deck_cards_suits = ['♦', '♠', '♥ ', '♣']      # Буби, Черви, Пики, Крести
-    @choice_options = %w(Пропустить_ход Добавить_карту Открыть_карты)
-    @deck_cards_dealer = []
-    @deck_cards_player = []
-    @sum_cards_dealer = 0
-    @sum_cards_player = 0
-  end
+require_relative 'dealer'
+require_relative 'bank'
 
-# раздаём карты игроку и диллеру
-  def distribute(name)
-    if "player" == name 
-      value = @deck_cards_number.sample
-      @sum_cards_player = total(@sum_cards_player, value)
-      @deck_cards_player << "#{value}_#{@deck_cards_suits.sample}"
-    elsif "dealer" == name
-      value = @deck_cards_number.sample
-      @sum_cards_dealer =  total(@sum_cards_dealer, value)
-      @deck_cards_dealer << "#{value}_#{@deck_cards_suits.sample}"
+min = Dealer.new
+@player_bank = Bank.new
+@dealer_bank = Bank.new
+
+def messenge(sms)
+  puts "#{sms}"
+end
+
+def show_balance
+  puts "Ваш баланс: #{@player_bank.balance}"
+  puts "Баланс Диллера: #{@dealer_bank.balance}"
+end
+
+show_balance
+messenge("Welcome to our casino")
+sleep 1
+messenge("The game of Black Jack begins")
+sleep 1
+messenge("Представьтесь пожалуйста!")
+name_player = gets.chomp
+messenge("Рады вас приветствовать #{name_player}!!!")
+messenge("У вас в Банке #{@player_bank.balance}")
+item = 1
+loop do
+  case item
+  when 1
+    messenge("Карту!____________________________________")
+    min.distribute("player")
+    min.distribute("dealer")
+    min.show_cards
+    item += 1
+    sleep 1
+  when 2
+    messenge("Ещё карту!____________________________________")
+    min.distribute("player")
+    min.distribute("dealer")
+    min.show_cards
+    messenge("Делайте ставки Гаспода!")
+    @player_bank.make_bet
+    @dealer_bank.make_bet
+    sleep 2
+    messenge("Ставки сделаны!")
+    sleep 2
+    messenge("____________________________________")
+    show_balance
+    min.player_choice
+    item = gets.chomp.to_i
+  when 3  # Пропустить_ход игроку
+    messenge("Вы пропускаете ход ____________________________________")
+    min.distribute("dealer") if min.sum_cards_dealer < 17
+    item += 2
+  when 4  # Добавить_карту
+    messenge("Ещё карту!____________________________________")
+    min.distribute("player")
+    min.distribute("dealer") if min.sum_cards_dealer < 17
+    item += 1
+  when 5  # открыть карты
+    messenge("Открываем карты____________________________________")
+    min.open_cards
+    if min.who_won == '1'
+      @player_bank.win_bet
+      messenge("Победил #{name_player}!!!")
+      messenge("Ваш баланс #{@player_bank.balance}")
+    elsif min.who_won == '-1'
+      @dealer_bank.win_bet
+      messenge("Победил Диллер!!")
+      messenge("Баланс #{@dealer_bank.balance}")
+    elsif min.who_won == '0'
+      @player_bank.return_bet
+      @dealer_bank.return_bet
+      messenge("Ничья")
+      show_balance
     end
-  end
-
-# считаем сумму карты на руках 
-  def total(sum_cards_name, value)
-    ten = %w(J Q K)
-
-    if ten.include?(value) 
-      sum_cards_name += 10
-    elsif (value == "A") && (sum_cards_name < 17)
-      sum_cards_name += 10  
-    elsif (value == "A") && (sum_cards_name > 17)
-      sum_cards_name += 1 
-    else 
-      sum_cards_name += value.to_i
-    end
-    return sum_cards_name.to_i
-  end
-
-  def player_choice
-    @choice_options.each_with_index{ | choice, row | puts "#{row + 3}. #{choice}"}
-  end
-
-  def show_cards
-    puts "Ваши карты:    #{@deck_cards_player}. Номинал: #{@sum_cards_player}"
-    puts "Карта Диллера: #{closed_cards}"
-  end
-
-  def closed_cards
-    return arr = Array.new(@deck_cards_dealer.size, "*")
-  end
-
-  def open_cards
-    puts "Ваши карты:    #{@deck_cards_player}. Номинал: #{@sum_cards_player}"
-    puts "Карта Диллера: #{@deck_cards_dealer}. Номинал: #{@sum_cards_dealer}"
-  end
-
-  def delete_deck_cards
-    @deck_cards_dealer.clear
-    @deck_cards_player.clear
-    @sum_cards_dealer = 0
-    @sum_cards_player = 0
-  end
-
-  def who_won
-    if @sum_cards_player == @sum_cards_dealer
-      return 0
-    elsif (@sum_cards_player > @sum_cards_dealer) && (@sum_cards_player <= 21)
-      return 1
-    elsif (@sum_cards_player < @sum_cards_dealer) && (@sum_cards_dealer <= 21)
-      return -1
-    end
+    sleep 2
+    messenge("____________________________________")
+    messenge("Для выхода из Казино Введите 'end' ")
+    messenge("Хотите продолжить Игру? Введите '6' ")
+    show_balance
+    item = gets.chomp.to_i
+    break if @dealer_bank.balance == 0 || @player_bank.balance == 0 || item == "end".to_i
+  when 6
+    messenge("____________________________________")
+    min.delete_deck_cards
+    item = 1
   end
 end
+
