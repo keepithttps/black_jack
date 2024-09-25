@@ -68,10 +68,10 @@ class Dealer
   def who_won
     if @sum_cards_player == @sum_cards_dealer
       return '0'
-    elsif (@sum_cards_player > @sum_cards_dealer) || (@sum_cards_player == 21)
-      return '1'
-    elsif (@sum_cards_player < @sum_cards_dealer) || (@sum_cards_dealer == 21)
-      return '-1'
+    elsif (@sum_cards_player < @sum_cards_dealer) && ((@sum_cards_player <= 21) && (@sum_cards_dealer > 21))
+      return '1'   # выйграл игрок
+    else
+      return '-1'  # выйграл диллер
     end
   end
 end
